@@ -6,13 +6,19 @@ html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
   border-radius: 8px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
   font-size: 13px; min-width: 180px;
 }
-#panel .row { margin: 4px 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
-.legend span { padding: 2px 6px; border-radius: 4px; color: #fff; font-size: 11px; }
-.legend span[data-lv="1"] { background: #c6dbef; color: #333; }
-.legend span[data-lv="2"] { background: #6baed6; }
-.legend span[data-lv="3"] { background: #2171b5; }
-.legend span[data-lv="4"] { background: #08306b; }
+#panel .row { margin: 5px 0; }
+#panel select, #panel input[type="range"] { vertical-align: middle; }
+#panel input[type="range"] { width: 96px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; }
+.toggles label { white-space: nowrap; }
+.legend { display: flex; flex-direction: column; gap: 3px; margin: 6px 0; }
+.legend span { padding: 2px 6px; border-radius: 3px; font-size: 11px; color: #333; }
+.legend span[data-lv="5"] { background: #ff00ff; color: #fff; }
+.legend span[data-lv="4"] { background: #ff0000; color: #fff; }
+.legend span[data-lv="3"] { background: #ffff00; }
+.legend span[data-lv="2"] { background: #00cc00; }
+.legend span[data-lv="1"] { background: #00ffff; }
+.legend span[data-lv="0"] { background: #ffffff; border: 1px solid #ccc; }
 button { padding: 4px 12px; cursor: pointer; }
 .hint { color: #666; font-size: 11px; margin-top: 6px; }
 #status { color: #2171b5; font-size: 12px; }
