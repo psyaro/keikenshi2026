@@ -1,0 +1,18 @@
+{
+  "type": "FeatureCollection",
+  "_note": "デモ用の疑似市区町村。本番は scripts/build_pmtiles.sh で実境界から PMTiles を生成して差し替える。",
+  "features": [
+    { "type": "Feature", "properties": { "code": "27001", "name": "あ市" }, "geometry": { "type": "Polygon", "coordinates": [[[136,34],[137,34],[137,35],[136,35],[136,34]]] } },
+    { "type": "Feature", "properties": { "code": "27002", "name": "い市" }, "geometry": { "type": "Polygon", "coordinates": [[[137,34],[138,34],[138,35],[137,35],[137,34]]] } },
+    { "type": "Feature", "properties": { "code": "27003", "name": "う市" }, "geometry": { "type": "Polygon", "coordinates": [[[138,34],[139,34],[139,35],[138,35],[138,34]]] } },
+    { "type": "Feature", "properties": { "code": "27004", "name": "え市" }, "geometry": { "type": "Polygon", "coordinates": [[[139,34],[140,34],[140,35],[139,35],[139,34]]] } },
+    { "type": "Feature", "properties": { "code": "13001", "name": "か区" }, "geometry": { "type": "Polygon", "coordinates": [[[136,35],[137,35],[137,36],[136,36],[136,35]]] } },
+    { "type": "Feature", "properties": { "code": "13002", "name": "き区" }, "geometry": { "type": "Polygon", "coordinates": [[[137,35],[138,35],[138,36],[137,36],[137,35]]] } },
+    { "type": "Feature", "properties": { "code": "13003", "name": "く区" }, "geometry": { "type": "Polygon", "coordinates": [[[138,35],[139,35],[139,36],[138,36],[138,35]]] } },
+    { "type": "Feature", "properties": { "code": "13004", "name": "け区" }, "geometry": { "type": "Polygon", "coordinates": [[[139,35],[140,35],[140,36],[139,36],[139,35]]] } },
+    { "type": "Feature", "properties": { "code": "01001", "name": "さ町" }, "geometry": { "type": "Polygon", "coordinates": [[[136,36],[137,36],[137,37],[136,37],[136,36]]] } },
+    { "type": "Feature", "properties": { "code": "01002", "name": "し町" }, "geometry": { "type": "Polygon", "coordinates": [[[137,36],[138,36],[138,37],[137,37],[137,36]]] } },
+    { "type": "Feature", "properties": { "code": "01003", "name": "す町" }, "geometry": { "type": "Polygon", "coordinates": [[[138,36],[139,36],[139,37],[138,37],[138,36]]] } },
+    { "type": "Feature", "properties": { "code": "01004", "name": "せ町" }, "geometry": { "type": "Polygon", "coordinates": [[[139,36],[140,36],[140,37],[139,37],[139,36]]] } }
+  ]
+}

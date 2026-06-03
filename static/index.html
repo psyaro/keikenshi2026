@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>経県値マップ 2026</title>
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <!-- 本番(PMTiles)を使う場合だけ必要。デモGeoJSONでは未使用でも害はない -->
+  <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+  <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="map"></div>
+  <div id="panel">
+    <div class="row"><b>経県値マップ 2026</b></div>
+    <div class="row">ユーザー: <span id="user"></span></div>
+    <div class="row">スコア: <b id="score">0</b></div>
+    <div class="legend">
+      <span data-lv="1">1 通過</span>
+      <span data-lv="2">2 接地</span>
+      <span data-lv="3">3 宿泊</span>
+      <span data-lv="4">4 居住</span>
+    </div>
+    <div class="row"><button id="save">保存</button> <span id="status"></span></div>
+    <div class="hint">区画をクリックで lv が 0→1→2→3→4→0 と循環</div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
