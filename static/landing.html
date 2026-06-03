@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>経県値マップ 2026 — 行ったまちを塗ろう</title>
+  <link href="style.css?v=20260604b" rel="stylesheet" />
+</head>
+<body class="landing">
+  <nav class="nav">
+    <a class="brand" href="/">経県値<span class="dot">マップ</span></a>
+    <div class="actions">
+      <a class="btn ghost sm" href="/login">ログイン</a>
+      <a class="btn sm" href="/app">ゲストで試す</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1>行ったまちを、ぬって記録。</h1>
+    <p>全国1,894の市区町村を「経県値」で塗り分け。通過・接地・訪問・宿泊・居住の5段階で、
+       あなたの旅の足あとを地図にします。背景地図の切替や鉄道・高速の重ね合わせも自在。</p>
+    <div class="cta">
+      <a class="btn" href="/app">ゲストで地図をひらく</a>
+      <a class="btn ghost" href="/login">登録して保存する</a>
+    </div>
+    <div class="swatches">
+      <span style="background:#ff00ff;color:#fff">◎ 居住</span>
+      <span style="background:#ff0000;color:#fff">○ 宿泊</span>
+      <span style="background:#ffff00">● 訪問</span>
+      <span style="background:#00cc00">△ 接地</span>
+      <span style="background:#00ffff">▲ 通過</span>
+      <span style="background:#fff;border:1px solid #ddd">× 未踏</span>
+    </div>
+  </header>
+
+  <section class="features">
+    <div class="feature"><h3>🗾 クリックで塗る</h3><p>市区町村をクリックするたびに段階が上がります。スコアは自動集計。</p></div>
+    <div class="feature"><h3>🗺️ 背景地図いろいろ</h3><p>地理院（淡色・標準・写真）、OpenStreetMap、CARTO、衛星写真などを切替＆透明度調整。</p></div>
+    <div class="feature"><h3>🚆 鉄道・高速を重ねる</h3><p>地理院ベクトルタイルで路線名・道路名つきの鉄道／高速道路をオーバーレイ。</p></div>
+    <div class="feature"><h3>⬇️ 書き出し</h3><p>結果を CSV・HTML レポート・JPG 画像でダウンロードできます。</p></div>
+    <div class="feature"><h3>🔐 ログインで保存</h3><p>アカウントを作れば、自分の塗りをいつでも呼び出して続きから編集。</p></div>
+    <div class="feature"><h3>📱 スマホ対応</h3><p>スマートフォンでも操作しやすいUIで、外出先から記録できます。</p></div>
+  </section>
+
+  <div class="foot">背景: 地理院タイル ／ 境界: 国土数値情報 N03(2021) ／ © 経県値マップ 2026</div>
+</body>
+</html>

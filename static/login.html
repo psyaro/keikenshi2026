@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ログイン — 経県値マップ 2026</title>
+  <link href="style.css?v=20260604b" rel="stylesheet" />
+</head>
+<body class="auth-wrap">
+  <main class="auth-card">
+    <h1>経県値マップ</h1>
+    <p class="sub">ログインして塗りを保存・呼び出し</p>
+
+    <div class="tabs">
+      <button id="tab-login" class="active">ログイン</button>
+      <button id="tab-register">新規登録</button>
+    </div>
+
+    <form id="form">
+      <label for="username">ユーザー名</label>
+      <input id="username" type="text" autocomplete="username" required />
+      <label for="password">パスワード</label>
+      <input id="password" type="password" autocomplete="current-password" required />
+      <button id="submit" type="submit" class="btn">ログイン</button>
+      <div id="msg" class="msg"></div>
+    </form>
+
+    <a class="back" href="/app">ログインせずゲストで使う →</a>
+    <a class="back" href="/">← トップへ戻る</a>
+  </main>
+
+  <script>
+    let mode = "login"; // login | register
+    const $ = (id) => document.getElementById(id);
+    function setMode(m) {
+      mode = m;
+      $("tab-login").classList.toggle("active", m === "login");
+      $("tab-register").classList.toggle("active", m === "register");
+      $("submit").textContent = m === "login" ? "ログイン" : "登録して始める";
+      $("password").autocomplete = m === "login" ? "current-password" : "new-password";
+      $("msg").textContent = "";
+    }
+    $("tab-login").onclick = () => setMode("login");
+    $("tab-register").onclick = () => setMode("register");
+
+    $("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      $("msg").textContent = "";
+      const body = JSON.stringify({ username: $("username").value, password: $("password").value });
+      const res = await fetch("/api/" + mode, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        location.href = "/app";
+      } else {
+        $("msg").textContent = data.error || "失敗しました";
+      }
+    });
+  </script>
+</body>
+</html>

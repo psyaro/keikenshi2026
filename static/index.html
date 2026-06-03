@@ -2,27 +2,40 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>経県値マップ 2026</title>
-  <!-- 依存はバージョン固定 + SRI(改ざん/差し替え検知)。更新時は integrity も再計算する。 -->
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"
         integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous" />
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
           integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
-  <!-- 本番(PMTiles)を使う場合だけ必要。デモGeoJSONでは未使用でも害はない -->
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
           integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
-  <!-- 自前アセットはキャッシュバスティング。変更したら ?v= を上げる -->
-  <link href="style.css?v=20260604" rel="stylesheet" />
+  <link href="style.css?v=20260604b" rel="stylesheet" />
 </head>
 <body>
   <div id="map"></div>
-  <div id="panel">
-    <div class="row"><b>経県値マップ 2026</b></div>
-    <div class="row">ユーザー: <span id="user"></span></div>
-    <div class="row">スコア: <b id="score">0</b></div>
 
-    <div class="row">背景:
+  <header id="topbar">
+    <a class="brand" href="/">経県値<span class="dot">マップ</span></a>
+    <div class="right">
+      <span id="whoami"></span>
+      <span id="account"></span>
+      <button id="panel-toggle" aria-label="設定">⚙ 設定</button>
+    </div>
+  </header>
+
+  <aside id="panel">
+    <div class="grab"></div>
+
+    <div class="field">
+      <h2>スコア</h2>
+      <div class="score"><span id="score">0</span> 点</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label for="bg">背景地図</label>
       <select id="bg">
         <optgroup label="地理院">
           <option value="pale">淡色</option>
@@ -40,27 +53,64 @@
         <option value="none">なし(白)</option>
       </select>
     </div>
-    <div class="row">背景の不透明度:
-      <input id="opacity" type="range" min="0" max="100" value="100" />
-      <span id="opval">100%</span>
-    </div>
-    <div class="row toggles">
-      <label><input type="checkbox" id="ov-rail" /> 鉄道</label>
-      <label><input type="checkbox" id="ov-hw" /> 高速道路</label>
-      <label><input type="checkbox" id="ov-label" /> 自治体名</label>
+
+    <div class="field">
+      <label>背景の不透明度</label>
+      <div class="opacity-row">
+        <input id="bgopacity" type="range" min="0" max="100" value="100" />
+        <span id="bgopval">100%</span>
+      </div>
     </div>
 
-    <div class="legend">
-      <span data-lv="5">◎ 居住 (5)</span>
-      <span data-lv="4">○ 宿泊 (4)</span>
-      <span data-lv="3">● 訪問 (3)</span>
-      <span data-lv="2">△ 接地 (2)</span>
-      <span data-lv="1">▲ 通過 (1)</span>
-      <span data-lv="0">× 未踏 (0)</span>
+    <div class="field">
+      <label>塗りの不透明度</label>
+      <div class="opacity-row">
+        <input id="fillopacity" type="range" min="0" max="100" value="65" />
+        <span id="fillopval">65%</span>
+      </div>
     </div>
-    <div class="row"><button id="save">保存</button> <span id="status"></span></div>
-    <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環</div>
-  </div>
-  <script src="app.js?v=20260604"></script>
+
+    <div class="field">
+      <label>重ねる</label>
+      <div class="toggles">
+        <label><input type="checkbox" id="ov-rail" /> 鉄道（路線名）</label>
+        <label><input type="checkbox" id="ov-hw" /> 高速道路（道路名）</label>
+        <label><input type="checkbox" id="ov-label" /> 自治体名</label>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <h2>凡例</h2>
+      <div class="legend">
+        <span data-lv="5">◎ 居住 (5)</span>
+        <span data-lv="4">○ 宿泊 (4)</span>
+        <span data-lv="3">● 訪問 (3)</span>
+        <span data-lv="2">△ 接地 (2)</span>
+        <span data-lv="1">▲ 通過 (1)</span>
+        <span data-lv="0">× 未踏 (0)</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>ダウンロード</label>
+      <div class="dl-row">
+        <button id="dl-csv" class="btn ghost sm">CSV</button>
+        <button id="dl-html" class="btn ghost sm">HTML</button>
+        <button id="dl-jpg" class="btn ghost sm">JPG</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <button id="save" class="btn sm">保存</button>
+      <span id="status"></span>
+    </div>
+    <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環します。</div>
+  </aside>
+
+  <script src="app.js?v=20260604b"></script>
 </body>
 </html>
