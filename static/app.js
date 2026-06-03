@@ -73,6 +73,7 @@ const SRC_LAYER = USE_PMTILES ? PMTILES_LAYER : undefined;
 const srcLayer = SRC_LAYER ? { "source-layer": SRC_LAYER } : {};
 let bgOpacity = 1;
 let fillOpacity = 0.65;
+let lineOpacity = 1;
 
 map.on("load", async () => {
   for (const [k, src] of Object.entries(BG_SOURCES)) {
@@ -90,7 +91,11 @@ map.on("load", async () => {
   });
   map.addLayer({
     id: "outline", type: "line", source: SOURCE, ...srcLayer,
-    paint: { "line-color": "#555", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 8, 1.4, 12, 2.5] },
+    paint: {
+      "line-color": "#555",
+      "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 8, 1.4, 12, 2.5],
+      "line-opacity": lineOpacity,
+    },
   });
 
   // 地理院ベクター重畳(初期OFF) — 線 + 名称ラベル
@@ -227,6 +232,11 @@ document.getElementById("fillopacity").addEventListener("input", (e) => {
   fillOpacity = e.target.value / 100;
   document.getElementById("fillopval").textContent = e.target.value + "%";
   if (map.getLayer("fill")) map.setPaintProperty("fill", "fill-opacity", fillOpacityExpr(fillOpacity));
+});
+document.getElementById("lineopacity").addEventListener("input", (e) => {
+  lineOpacity = e.target.value / 100;
+  document.getElementById("lineopval").textContent = e.target.value + "%";
+  if (map.getLayer("outline")) map.setPaintProperty("outline", "line-opacity", lineOpacity);
 });
 
 const toggle = (id, layers) =>
