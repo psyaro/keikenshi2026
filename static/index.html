@@ -12,7 +12,8 @@
   <!-- 本番(PMTiles)を使う場合だけ必要。デモGeoJSONでは未使用でも害はない -->
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
           integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
-  <link href="style.css" rel="stylesheet" />
+  <!-- 自前アセットはキャッシュバスティング。変更したら ?v= を上げる -->
+  <link href="style.css?v=20260604" rel="stylesheet" />
 </head>
 <body>
   <div id="map"></div>
@@ -23,14 +24,23 @@
 
     <div class="row">背景:
       <select id="bg">
-        <option value="pale">地理院 淡色</option>
-        <option value="std">地理院 標準</option>
-        <option value="photo">写真</option>
-        <option value="blank">白地図(z5-8)</option>
+        <optgroup label="地理院">
+          <option value="pale">淡色</option>
+          <option value="std">標準</option>
+          <option value="photo">写真</option>
+          <option value="blank">白地図(z5-8)</option>
+        </optgroup>
+        <optgroup label="その他">
+          <option value="osm">OpenStreetMap</option>
+          <option value="carto_light">CARTO Light</option>
+          <option value="carto_dark">CARTO Dark</option>
+          <option value="esri_photo">Esri 衛星写真</option>
+          <option value="otopo">OpenTopoMap</option>
+        </optgroup>
         <option value="none">なし(白)</option>
       </select>
     </div>
-    <div class="row">塗り透明度:
+    <div class="row">背景の不透明度:
       <input id="opacity" type="range" min="0" max="100" value="100" />
       <span id="opval">100%</span>
     </div>
@@ -51,6 +61,6 @@
     <div class="row"><button id="save">保存</button> <span id="status"></span></div>
     <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環</div>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260604"></script>
 </body>
 </html>

@@ -34,11 +34,20 @@ const fillOpacityExpr = (a) => [
 const GSI = "https://cyberjapandata.gsi.go.jp/xyz";
 const GSI_ATTR =
   "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>";
+const OSM_ATTR = "© <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors";
+const r = (tiles, attribution, extra = {}) => ({ type: "raster", tiles, tileSize: 256, attribution, ...extra });
 const BG_SOURCES = {
-  pale: { type: "raster", tiles: [`${GSI}/pale/{z}/{x}/{y}.png`], tileSize: 256, attribution: GSI_ATTR },
-  std: { type: "raster", tiles: [`${GSI}/std/{z}/{x}/{y}.png`], tileSize: 256, attribution: GSI_ATTR },
-  photo: { type: "raster", tiles: [`${GSI}/seamlessphoto/{z}/{x}/{y}.jpg`], tileSize: 256, attribution: GSI_ATTR },
-  blank: { type: "raster", tiles: [`${GSI}/blank/{z}/{x}/{y}.png`], tileSize: 256, minzoom: 5, maxzoom: 8, attribution: GSI_ATTR },
+  // 地理院
+  pale: r([`${GSI}/pale/{z}/{x}/{y}.png`], GSI_ATTR),
+  std: r([`${GSI}/std/{z}/{x}/{y}.png`], GSI_ATTR),
+  photo: r([`${GSI}/seamlessphoto/{z}/{x}/{y}.jpg`], GSI_ATTR),
+  blank: r([`${GSI}/blank/{z}/{x}/{y}.png`], GSI_ATTR, { minzoom: 5, maxzoom: 8 }),
+  // その他
+  osm: r(["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], OSM_ATTR),
+  carto_light: r(["https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"], OSM_ATTR + " © CARTO"),
+  carto_dark: r(["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"], OSM_ATTR + " © CARTO"),
+  esri_photo: r(["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], "Tiles © Esri"),
+  otopo: r(["https://a.tile.opentopomap.org/{z}/{x}/{y}.png"], "© OpenTopoMap (CC-BY-SA)"),
 };
 
 const map = new maplibregl.Map({
@@ -65,10 +74,10 @@ const paints = {}; // code -> lv (現在の状態 / 保存対象)
 const SOURCE = "cities";
 const SRC_LAYER = USE_PMTILES ? PMTILES_LAYER : undefined; // geojsonには無い
 const srcLayer = SRC_LAYER ? { "source-layer": SRC_LAYER } : {};
-let opacity = 1; // 塗りの不透明度(スライダー)
+let bgOpacity = 1; // 背景地図の不透明度(スライダー)
 
 map.on("load", async () => {
-  // 背景(地理院ラスター)を全部追加して可視を切り替える方式
+  // 背景(ラスター)を全部追加して可視を切り替える方式
   for (const [k, src] of Object.entries(BG_SOURCES)) {
     map.addSource("bg-" + k, src);
     map.addLayer({ id: "bg-" + k, type: "raster", source: "bg-" + k, layout: { visibility: "none" } });
@@ -81,24 +90,46 @@ map.on("load", async () => {
 
   map.addLayer({
     id: "fill", type: "fill", source: SOURCE, ...srcLayer,
-    paint: { "fill-color": fillColor, "fill-opacity": fillOpacityExpr(opacity) },
+    // 塗り済みは不透明、未踏は透明(背景地図を見せる)
+    paint: { "fill-color": fillColor, "fill-opacity": fillOpacityExpr(1) },
   });
   map.addLayer({
     id: "outline", type: "line", source: SOURCE, ...srcLayer,
-    paint: { "line-color": "#888", "line-width": 0.4 },
+    paint: {
+      "line-color": "#555",
+      "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 8, 1.4, 12, 2.5],
+    },
   });
 
-  // 地理院ベクター重畳(初期OFF)
+  // 地理院ベクター重畳(初期OFF) — 線 + 名称ラベル
   map.addLayer({
     id: "ovl-railway", type: "line", source: "gsivec", "source-layer": "railway",
     layout: { visibility: "none", "line-cap": "round" },
     paint: { "line-color": "#444", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 12, 1.6] },
   });
   map.addLayer({
+    id: "ovl-railway-label", type: "symbol", source: "gsivec", "source-layer": "railway",
+    minzoom: 9,
+    layout: {
+      visibility: "none", "symbol-placement": "line", "text-field": ["get", "name"],
+      "text-font": ["NotoSansCJKjp-Regular"], "text-size": 11,
+    },
+    paint: { "text-color": "#333", "text-halo-color": "#fff", "text-halo-width": 1.4 },
+  });
+  map.addLayer({
     id: "ovl-highway", type: "line", source: "gsivec", "source-layer": "road",
     filter: ["==", "motorway", 1], // 高速道路
     layout: { visibility: "none", "line-cap": "round", "line-join": "round" },
     paint: { "line-color": "#1b9e1b", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 1, 12, 3] },
+  });
+  map.addLayer({
+    id: "ovl-highway-label", type: "symbol", source: "gsivec", "source-layer": "road",
+    filter: ["==", "motorway", 1], minzoom: 9,
+    layout: {
+      visibility: "none", "symbol-placement": "line", "text-field": ["get", "name"],
+      "text-font": ["NotoSansCJKjp-Regular"], "text-size": 11,
+    },
+    paint: { "text-color": "#1b6e1b", "text-halo-color": "#fff", "text-halo-width": 1.4 },
   });
 
   // 自治体名ラベル(初期OFF) — 自前のpolygon重心に表示
@@ -150,23 +181,30 @@ function setBackground(key) {
   for (const k of Object.keys(BG_SOURCES)) {
     map.setLayoutProperty("bg-" + k, "visibility", k === key ? "visible" : "none");
   }
+  applyBgOpacity();
+}
+
+function applyBgOpacity() {
+  for (const k of Object.keys(BG_SOURCES)) {
+    if (map.getLayer("bg-" + k)) map.setPaintProperty("bg-" + k, "raster-opacity", bgOpacity);
+  }
 }
 
 // ---- UI 配線 -----------------------------------------------------------
 document.getElementById("bg").addEventListener("change", (e) => setBackground(e.target.value));
 
 document.getElementById("opacity").addEventListener("input", (e) => {
-  opacity = e.target.value / 100;
+  bgOpacity = e.target.value / 100;
   document.getElementById("opval").textContent = e.target.value + "%";
-  if (map.getLayer("fill")) map.setPaintProperty("fill", "fill-opacity", fillOpacityExpr(opacity));
+  applyBgOpacity();
 });
 
-const toggle = (id, layer) =>
+const toggle = (id, layers) =>
   document.getElementById(id).addEventListener("change", (e) =>
-    map.setLayoutProperty(layer, "visibility", e.target.checked ? "visible" : "none"));
-toggle("ov-rail", "ovl-railway");
-toggle("ov-hw", "ovl-highway");
-toggle("ov-label", "labels");
+    layers.forEach((l) => map.setLayoutProperty(l, "visibility", e.target.checked ? "visible" : "none")));
+toggle("ov-rail", ["ovl-railway", "ovl-railway-label"]);
+toggle("ov-hw", ["ovl-highway", "ovl-highway-label"]);
+toggle("ov-label", ["labels"]);
 
 document.getElementById("save").addEventListener("click", async () => {
   const status = document.getElementById("status");
