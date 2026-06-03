@@ -10,7 +10,7 @@
           integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
           integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
-  <link href="style.css?v=20260604b" rel="stylesheet" />
+  <link href="style.css?v=20260604d" rel="stylesheet" />
 </head>
 <body>
   <div id="map"></div>
@@ -121,12 +121,14 @@
     </div>
 
     <div class="field">
-      <button id="save" class="btn sm">保存</button>
-      <span id="status"></span>
+      <span id="status" class="status-auto">自動保存</span>
     </div>
-    <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環します。</div>
+    <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環します。変更は自動保存されます。</div>
+
+    <div class="divider"></div>
+    <div class="field" id="panel-account"></div>
   </aside>
 
-  <script src="app.js?v=20260604c"></script>
+  <script src="app.js?v=20260604d"></script>
 </body>
 </html>

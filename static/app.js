@@ -63,7 +63,8 @@ const map = new maplibregl.Map({
   },
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
-map.addControl(new maplibregl.AttributionControl({ compact: true }));
+// クレジット(地理院/OSM/CARTO/Esri等)はすべて左下にまとめる
+map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
 
 const paints = {};       // code -> lv
 const names = {};        // code -> 市区町村名
@@ -97,15 +98,14 @@ map.on("load", async () => {
   map.addLayer({
     id: "ovl-railway-case", type: "line", source: "gsivec", "source-layer": "railway",
     layout: { visibility: "none", "line-cap": "round" },
-    paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 1.8, 12, 3.8] },
+    paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 2.2, 12, 4.6] },
   });
   map.addLayer({
     id: "ovl-railway", type: "line", source: "gsivec", "source-layer": "railway",
-    layout: { visibility: "none" },
+    layout: { visibility: "none", "line-cap": "round" },
     paint: {
-      "line-color": "#6a1b9a", // 濃い紫(経県値カラーと被らない)
-      "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.9, 12, 2.0],
-      "line-dasharray": [3, 2],
+      "line-color": "#b5402a", // 赤茶(細い白縁取りで視認性確保)
+      "line-width": ["interpolate", ["linear"], ["zoom"], 6, 1.0, 12, 3.0],
     },
   });
   map.addLayer({
@@ -143,6 +143,7 @@ map.on("load", async () => {
     if (code == null) return;
     setLv(code, ((paints[code] || 0) + 1) % (LV_MAX + 1));
     updateScore();
+    scheduleSave();
   });
   map.on("mouseenter", "fill", () => (map.getCanvas().style.cursor = "pointer"));
   map.on("mouseleave", "fill", () => (map.getCanvas().style.cursor = ""));
@@ -199,6 +200,7 @@ function applyBgOpacity() {
   try { me = await (await fetch("/api/me")).json(); } catch (_) {}
   const who = document.getElementById("whoami");
   const acc = document.getElementById("account");
+  const panelAcc = document.getElementById("panel-account");
   if (me.authed) {
     who.innerHTML = `<b>${escapeHtml(me.user)}</b> さん`;
     acc.innerHTML = `<button id="logout" class="btn ghost sm">ログアウト</button>`;
@@ -206,9 +208,11 @@ function applyBgOpacity() {
       await fetch("/api/logout", { method: "POST" });
       location.reload();
     };
+    panelAcc.innerHTML = `<b>${escapeHtml(me.user)}</b> でログイン中（アカウントに保存）`;
   } else {
     who.textContent = "ゲスト";
     acc.innerHTML = `<a class="btn sm" href="/login">ログイン</a>`;
+    panelAcc.innerHTML = `今はゲストです。自分の記録として残すには <a href="/login">ログイン / 新規登録 →</a>`;
   }
 })();
 
@@ -284,24 +288,33 @@ document.getElementById("imp-file").addEventListener("change", (e) => {
   const reader = new FileReader();
   reader.onload = () => {
     const n = importCsv(String(reader.result));
-    const status = document.getElementById("status");
-    status.textContent = `${n}件読込`;
-    setTimeout(() => (status.textContent = ""), 2500);
+    document.getElementById("status").textContent = `${n}件読込`;
+    scheduleSave();
   };
   reader.readAsText(f);
   e.target.value = "";
 });
 
-document.getElementById("save").addEventListener("click", async () => {
+// ---- 自動保存 -----------------------------------------------------------
+let saveTimer = null;
+async function saveData() {
   const status = document.getElementById("status");
   status.textContent = "保存中…";
-  const res = await fetch("/api/save", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ paints }),
-  });
-  status.textContent = res.ok ? "保存しました" : "失敗";
-  setTimeout(() => (status.textContent = ""), 2000);
-});
+  try {
+    const res = await fetch("/api/save", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paints }),
+    });
+    status.textContent = res.ok ? "保存しました ✓" : "保存失敗";
+  } catch (_) {
+    status.textContent = "保存失敗(通信エラー)";
+  }
+}
+function scheduleSave() {
+  document.getElementById("status").textContent = "編集中…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveData, 700);
+}
 
 // ---- ダウンロード -------------------------------------------------------
 function painted() {

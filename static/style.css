@@ -137,6 +137,9 @@ input[type="range"] { accent-color: var(--brand); }
 .legend span[data-lv="0"] { background: #fff; border: 1px solid var(--line); }
 .hint { color: var(--muted); font-size: 11px; margin-top: 10px; line-height: 1.5; }
 #status { color: var(--brand); font-size: 12px; }
+.status-auto { color: var(--muted); }
+#panel-account { font-size: 12px; color: var(--muted); line-height: 1.6; }
+#panel-account b { color: var(--ink); }
 
 #panel-toggle { display: none; }
 
