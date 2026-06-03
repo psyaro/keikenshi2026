@@ -55,6 +55,14 @@
     </div>
 
     <div class="field">
+      <label for="boundary">境界の精細さ</label>
+      <select id="boundary">
+        <option value="std">標準（軽い）</option>
+        <option value="detail">高精細（重い）</option>
+      </select>
+    </div>
+
+    <div class="field">
       <label>背景の不透明度</label>
       <div class="opacity-row">
         <input id="bgopacity" type="range" min="0" max="100" value="100" />
@@ -105,12 +113,20 @@
     </div>
 
     <div class="field">
+      <label>インポート</label>
+      <div class="dl-row">
+        <button id="imp-csv" class="btn ghost sm">CSV を読み込む</button>
+      </div>
+      <input id="imp-file" type="file" accept=".csv,text/csv" hidden />
+    </div>
+
+    <div class="field">
       <button id="save" class="btn sm">保存</button>
       <span id="status"></span>
     </div>
     <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環します。</div>
   </aside>
 
-  <script src="app.js?v=20260604b"></script>
+  <script src="app.js?v=20260604c"></script>
 </body>
 </html>

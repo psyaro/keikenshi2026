@@ -17,7 +17,7 @@ import sys
 
 BASE = pathlib.Path(__file__).resolve().parent.parent
 SRC = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else BASE / "static" / "municipalities_raw.json"
-OUT = BASE / "static" / "cityarea.geojson"
+OUT = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else BASE / "static" / "cityarea.geojson"
 
 
 def main():

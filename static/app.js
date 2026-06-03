@@ -93,10 +93,20 @@ map.on("load", async () => {
   });
 
   // 地理院ベクター重畳(初期OFF) — 線 + 名称ラベル
+  // 鉄道は「白casing + 濃色破線」でどの塗り色の上でも視認できるようにする
+  map.addLayer({
+    id: "ovl-railway-case", type: "line", source: "gsivec", "source-layer": "railway",
+    layout: { visibility: "none", "line-cap": "round" },
+    paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 1.8, 12, 3.8] },
+  });
   map.addLayer({
     id: "ovl-railway", type: "line", source: "gsivec", "source-layer": "railway",
-    layout: { visibility: "none", "line-cap": "round" },
-    paint: { "line-color": "#444", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 12, 1.6] },
+    layout: { visibility: "none" },
+    paint: {
+      "line-color": "#6a1b9a", // 濃い紫(経県値カラーと被らない)
+      "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.9, 12, 2.0],
+      "line-dasharray": [3, 2],
+    },
   });
   map.addLayer({
     id: "ovl-railway-label", type: "symbol", source: "gsivec", "source-layer": "railway", minzoom: 9,
@@ -152,11 +162,28 @@ async function loadUserData() {
   for (const code in data) setLv(code, data[code]);
   updateScore();
 }
-async function loadNames() {
+async function loadNames(url = GEOJSON_URL) {
   try {
-    const gj = await (await fetch(GEOJSON_URL)).json();
+    const gj = await (await fetch(url)).json();
     for (const f of gj.features) names[f.properties.code] = f.properties.name;
   } catch (_) {}
+}
+
+// 境界の精細さ切替(geojson source のみ)。データ差し替え後に塗りを貼り直す。
+const BOUNDARY_URL = { std: GEOJSON_URL, detail: "cityarea_detail.geojson" };
+function setBoundary(key) {
+  const url = BOUNDARY_URL[key] || GEOJSON_URL;
+  const src = map.getSource(SOURCE);
+  if (!src || !src.setData) return; // PMTilesでは無効
+  src.setData(url);
+  const reapply = (e) => {
+    if (e.sourceId === SOURCE && map.isSourceLoaded(SOURCE)) {
+      map.off("sourcedata", reapply);
+      for (const c in paints) if (paints[c] > 0) setLv(c, paints[c]);
+    }
+  };
+  map.on("sourcedata", reapply);
+  loadNames(url);
 }
 function setBackground(key) {
   for (const k of Object.keys(BG_SOURCES)) map.setLayoutProperty("bg-" + k, "visibility", k === key ? "visible" : "none");
@@ -201,12 +228,69 @@ document.getElementById("fillopacity").addEventListener("input", (e) => {
 const toggle = (id, layers) =>
   document.getElementById(id).addEventListener("change", (e) =>
     layers.forEach((l) => map.setLayoutProperty(l, "visibility", e.target.checked ? "visible" : "none")));
-toggle("ov-rail", ["ovl-railway", "ovl-railway-label"]);
+toggle("ov-rail", ["ovl-railway-case", "ovl-railway", "ovl-railway-label"]);
 toggle("ov-hw", ["ovl-highway", "ovl-highway-label"]);
 toggle("ov-label", ["labels"]);
 
+document.getElementById("boundary").addEventListener("change", (e) => setBoundary(e.target.value));
+
 document.getElementById("panel-toggle").addEventListener("click", () =>
   document.getElementById("panel").classList.toggle("open"));
+
+// ---- CSV インポート -----------------------------------------------------
+function parseCsv(text) {
+  const rows = []; let field = "", row = [], q = false;
+  text = text.replace(/^﻿/, "");
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else field += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+    else if (c !== "\r") field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter((r) => r.some((x) => x !== ""));
+}
+function importCsv(text) {
+  const rows = parseCsv(text);
+  if (!rows.length) return 0;
+  let codeIdx = 0, lvIdx = 1, start = 0;
+  const head = rows[0].map((s) => s.trim().toLowerCase());
+  if (head.includes("code") || head.includes("lv")) {
+    start = 1;
+    if (head.includes("code")) codeIdx = head.indexOf("code");
+    if (head.includes("lv")) lvIdx = head.indexOf("lv");
+  } else {
+    lvIdx = rows[0].length >= 3 ? 2 : 1; // 出力CSV(code,name,lv,..)も受ける
+  }
+  let n = 0;
+  for (let i = start; i < rows.length; i++) {
+    const code = (rows[i][codeIdx] || "").trim();
+    let lv = parseInt((rows[i][lvIdx] || "").trim(), 10);
+    if (!code || isNaN(lv)) continue;
+    setLv(code, Math.max(0, Math.min(LV_MAX, lv)));
+    n++;
+  }
+  updateScore();
+  return n;
+}
+document.getElementById("imp-csv").addEventListener("click", () => document.getElementById("imp-file").click());
+document.getElementById("imp-file").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const n = importCsv(String(reader.result));
+    const status = document.getElementById("status");
+    status.textContent = `${n}件読込`;
+    setTimeout(() => (status.textContent = ""), 2500);
+  };
+  reader.readAsText(f);
+  e.target.value = "";
+});
 
 document.getElementById("save").addEventListener("click", async () => {
   const status = document.getElementById("status");
