@@ -77,6 +77,27 @@ python app.py
 - フロントの SRI ハッシュは `index.html` の `integrity=` に記載。CDN 差し替え/改ざんを検知する。
 - 自前ビルドで CDN 依存を無くしたい場合は maplibre-gl / pmtiles を `static/vendor/` に同梱する手もある。
 
+## GitHub Pages デモ（`docs/`）
+
+サーバ無しで動く静的デモを `docs/` に同梱。Flask 版との違い:
+
+- 保存は **localStorage（この端末のブラウザのみ・揮発しうる）**。ログイン機能なし。
+- 揮発注意バナーを常時表示。記録の保管は **CSV / HTML / JPG ダウンロード**で。
+- 共有カード（OGP / Twitter）用に `docs/og.png`（1200×630、`scripts/make_og.py` で生成）。
+
+公開手順:
+1. GitHub にリポジトリを作って push
+2. Settings → Pages → Source = `main` / `/docs`
+3. `docs/index.html` の OGP メタ内 `USERNAME` / `REPO` を公開URLに置換（`og:image`・`og:url` は絶対URL）
+
+> Flask 版（`static/`）とデモ版（`docs/`）は別ビルド。デモ版の `app.js` は localStorage 保存・ログイン無しに差し替え済み。
+
+## クレジット表示
+
+各種データのクレジットは地図**右下**の attribution に集約。表示中のソースの分だけ自動で出る:
+地理院タイル / OpenStreetMap / CARTO / Esri / OpenTopoMap（背景切替に追従）、
+地理院ベクトル（鉄道・高速ON時）、**国土数値情報 N03（境界・常時）**。
+
 ## 本番(実データ)へ
 
 1. 市区町村境界 GeoJSON を用意 (国土数値情報 / e-Stat、`code`・`name` 属性付き)

@@ -32,6 +32,7 @@ const fillOpacityExpr = (a) => ["case", [">", ["coalesce", ["feature-state", "lv
 const GSI = "https://cyberjapandata.gsi.go.jp/xyz";
 const GSI_ATTR = "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>";
 const OSM_ATTR = "© <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors";
+const N03_ATTR = "境界: <a href='https://nlftp.mlit.go.jp/ksj/' target='_blank'>国土数値情報(行政区域)</a>";
 const r = (tiles, attribution, extra = {}) => ({ type: "raster", tiles, tileSize: 256, attribution, ...extra });
 const BG_SOURCES = {
   pale: r([`${GSI}/pale/{z}/{x}/{y}.png`], GSI_ATTR),
@@ -63,8 +64,9 @@ const map = new maplibregl.Map({
   },
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
-// クレジット(地理院/OSM/CARTO/Esri等)はすべて左下にまとめる
-map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+// 各種データのクレジット(地理院/OSM/CARTO/Esri/N03 等)は右下に表示。
+// 表示中のソースの分だけ自動で出る(背景切替や重畳ON/OFFに追従)。
+map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 
 const paints = {};       // code -> lv
 const names = {};        // code -> 市区町村名
@@ -82,8 +84,8 @@ map.on("load", async () => {
   }
 
   map.addSource(SOURCE, USE_PMTILES
-    ? { type: "vector", url: "pmtiles://" + PMTILES_URL, promoteId: "code" }
-    : { type: "geojson", data: GEOJSON_URL, promoteId: "code" });
+    ? { type: "vector", url: "pmtiles://" + PMTILES_URL, promoteId: "code", attribution: N03_ATTR }
+    : { type: "geojson", data: GEOJSON_URL, promoteId: "code", attribution: N03_ATTR });
 
   map.addLayer({
     id: "fill", type: "fill", source: SOURCE, ...srcLayer,
