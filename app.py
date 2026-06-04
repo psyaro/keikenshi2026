@@ -3,26 +3,41 @@
 役割:
   - ページ配信: ランディング(/) / 地図アプリ(/app) / ログイン(/login)
   - 認証: 登録・ログイン・ログアウト(Flaskセッション + パスワードハッシュ)
-  - データ: ログイン中はその人の、未ログインは guest の {code: lv} を取得/保存
+  - データ: ログイン中はその人の、未ログインはセッション固有の guest_<token> の {code: lv} を取得/保存
 
 ジオメトリ(市区町村境界)は静的なのでここでは一切触らない。
 動的なのは「code -> lv」という小さな整数表だけなので SQLite 1ファイルで足りる。
 """
 import os
 import pathlib
+import re
+import secrets
 import sqlite3
 
-from flask import (Flask, g, jsonify, redirect, request, send_from_directory,
-                   session)
+from flask import (Flask, g, jsonify, request, send_from_directory, session)
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE = pathlib.Path(__file__).parent
 STATIC = BASE / "static"
 DB_PATH = BASE / "data" / "keikenshi.db"
 
+LV_MAX = 4
+_CODE_RE = re.compile(r"^\d{5}$")
+
 app = Flask(__name__, static_folder=str(STATIC), static_url_path="")
 # セッション署名鍵。本番は環境変数 SECRET_KEY で必ず上書きする。
 app.secret_key = os.environ.get("SECRET_KEY", "dev-insecure-change-me")
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    # HTTPS 環境では環境変数 SESSION_COOKIE_SECURE=1 を設定する。
+    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+    MAX_CONTENT_LENGTH=64 * 1024,  # リクエストボディ上限 64KB
+)
+
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
 
 def db() -> sqlite3.Connection:
@@ -53,8 +68,12 @@ def _close(_):
 
 
 def current_user() -> str:
-    """ログイン中はユーザー名、未ログインは 'guest'。"""
-    return session.get("user", "guest")
+    """ログイン中はユーザー名、未ログインはセッション固有のゲストID。"""
+    if "user" in session:
+        return session["user"]
+    if "guest_id" not in session:
+        session["guest_id"] = "guest_" + secrets.token_hex(16)
+    return session["guest_id"]
 
 
 # ---- ページ -------------------------------------------------------------
@@ -80,13 +99,16 @@ def me():
 
 
 @app.post("/api/register")
+@limiter.limit("10 per minute")
 def register():
     data = request.get_json(force=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
-    if len(username) < 2 or len(password) < 4:
-        return jsonify({"error": "ユーザー名は2文字以上、パスワードは4文字以上"}), 400
-    if username.lower() == "guest":
+    if len(username) < 2 or len(username) > 30:
+        return jsonify({"error": "ユーザー名は2〜30文字"}), 400
+    if len(password) < 4:
+        return jsonify({"error": "パスワードは4文字以上"}), 400
+    if username.lower() == "guest" or username.lower().startswith("guest_"):
         return jsonify({"error": "そのユーザー名は使えません"}), 400
     con = db()
     if con.execute("select 1 from users where username=?", (username,)).fetchone():
@@ -101,6 +123,7 @@ def register():
 
 
 @app.post("/api/login")
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json(force=True) or {}
     username = (data.get("username") or "").strip()
@@ -133,11 +156,21 @@ def save():
     """{paints:{code:lv}} を現在のユーザーに upsert。lv=0 は削除。"""
     payload = request.get_json(force=True) or {}
     paints = payload.get("paints", {})
+    if not isinstance(paints, dict):
+        return jsonify({"error": "invalid"}), 400
     user = current_user()
     con = db()
+    saved = 0
     with con:
         for code, lv in paints.items():
-            lv = int(lv)
+            if not _CODE_RE.match(str(code)):
+                continue
+            try:
+                lv = int(lv)
+            except (TypeError, ValueError):
+                continue
+            if not (0 <= lv <= LV_MAX):
+                continue
             if lv > 0:
                 con.execute(
                     "insert into paint(user, code, lv) values(?, ?, ?) "
@@ -148,8 +181,10 @@ def save():
                 con.execute(
                     "delete from paint where user = ? and code = ?", (user, code)
                 )
-    return jsonify({"ok": True, "saved": len(paints), "user": user})
+            saved += 1
+    return jsonify({"ok": True, "saved": saved, "user": user})
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # 本番は gunicorn などで起動する。直接実行時もデバッグはオフがデフォルト。
+    app.run(debug=os.environ.get("FLASK_DEBUG", "0") == "1", port=5000)
