@@ -24,36 +24,16 @@
     </div>
   </header>
 
-  <!-- レベルピッカー -->
-  <div id="lv-picker" class="hidden">
-    <div id="lv-picker-name"></div>
-    <div class="lv-btns">
-      <button class="lv-btn" data-lv="0">× 未踏</button>
-      <button class="lv-btn" data-lv="1">▲ 通過</button>
-      <button class="lv-btn" data-lv="2">△ 接地</button>
-      <button class="lv-btn" data-lv="3">● 訪問</button>
-      <button class="lv-btn" data-lv="4">○ 宿泊</button>
-    </div>
-  </div>
-
   <aside id="panel">
     <div class="grab"></div>
 
     <div class="panel-tabs">
-      <button class="ptab active" data-tab="search">🔍 検索</button>
-      <button class="ptab" data-tab="settings">⚙ 設定</button>
+      <button class="ptab active" data-tab="settings">⚙ 設定</button>
+      <button class="ptab" data-tab="search">🔍 検索</button>
     </div>
 
-    <!-- 検索/都道府県タブ -->
-    <div id="tab-search" class="tab-pane">
-      <input id="search-input" type="search" placeholder="市区町村名で検索…" autocomplete="off" />
-      <div id="search-results" class="ov-list" style="display:none"></div>
-      <div id="pref-grid" class="pref-grid"></div>
-      <div id="city-list" class="ov-list" style="display:none"></div>
-    </div>
-
-    <!-- 設定タブ -->
-    <div id="tab-settings" class="tab-pane hidden">
+    <!-- 設定タブ（デフォルト） -->
+    <div id="tab-settings" class="tab-pane">
       <div class="field">
         <h2>スコア</h2>
         <div class="score"><span id="score">0</span> 点</div>
@@ -161,6 +141,14 @@
 
       <div class="divider"></div>
       <div class="field" id="panel-account"></div>
+    </div>
+
+    <!-- 検索/都道府県タブ -->
+    <div id="tab-search" class="tab-pane hidden">
+      <input id="search-input" type="search" placeholder="市区町村名で検索…" autocomplete="off" />
+      <div id="search-results" class="ov-list" style="display:none"></div>
+      <div id="pref-grid" class="pref-grid"></div>
+      <div id="city-list" class="ov-list" style="display:none"></div>
     </div>
   </aside>
 

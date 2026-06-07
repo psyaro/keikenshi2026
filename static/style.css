@@ -189,31 +189,6 @@ input[type="range"] { accent-color: var(--brand); }
 }
 .pref-btn.active { border-color: var(--brand); background: rgba(79,70,229,.08); color: var(--brand); font-weight: 700; }
 
-/* ===== レベルピッカー ===== */
-#lv-picker {
-  position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
-  background: #fff; border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.18);
-  padding: 16px 16px 32px; animation: slideUp .18s ease;
-}
-#lv-picker.hidden { display: none; }
-#lv-picker-name { font-weight: 700; font-size: 16px; margin-bottom: 12px; text-align: center; }
-.lv-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-.lv-btn {
-  flex: 1; min-width: 70px; padding: 10px 4px; border-radius: 10px;
-  border: 2px solid var(--line); background: #fff; font-size: 13px; font-weight: 700;
-  cursor: pointer; transition: all .1s;
-}
-.lv-btn[data-lv="0"] { color: var(--muted); }
-.lv-btn[data-lv="1"] { border-color: #00ffff; background: #00ffff22; }
-.lv-btn[data-lv="2"] { border-color: #00cc00; background: #00cc0022; }
-.lv-btn[data-lv="3"] { border-color: #cccc00; background: #ffff0033; }
-.lv-btn[data-lv="4"] { border-color: #ff0000; background: #ff000022; }
-.lv-btn.active { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-.lv-btn[data-lv="1"].active { background: #00ffff; }
-.lv-btn[data-lv="2"].active { background: #00cc00; color: #fff; }
-.lv-btn[data-lv="3"].active { background: #ffff00; }
-.lv-btn[data-lv="4"].active { background: #ff0000; color: #fff; }
 
 @media (max-width: 640px) {
   #panel-toggle {

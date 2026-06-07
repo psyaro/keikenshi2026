@@ -213,31 +213,6 @@ function flyTo(code) {
   if (b) map.fitBounds(b, { padding: 60, maxZoom: 13, duration: 600 });
 }
 
-// ---- レベルピッカー -------------------------------------------------------
-let pickerCode = null;
-function openPicker(code) {
-  pickerCode = code;
-  const lv = paints[code] || 0;
-  document.getElementById("lv-picker-name").textContent = names[code] || code;
-  document.querySelectorAll(".lv-btn").forEach(btn => {
-    btn.classList.toggle("active", parseInt(btn.dataset.lv) === lv);
-  });
-  document.getElementById("lv-picker").classList.remove("hidden");
-}
-document.querySelectorAll(".lv-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (pickerCode == null) return;
-    setLv(pickerCode, parseInt(btn.dataset.lv));
-    updateScore();
-    scheduleSave();
-    document.getElementById("lv-picker").classList.add("hidden");
-    // リスト表示中なら該当行のバッジを更新
-    renderBadge(pickerCode);
-  });
-});
-document.getElementById("lv-picker").addEventListener("click", (e) => {
-  if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden");
-});
 
 function lvBadgeStyle(lv) {
   const colors = { 0: "#eee", 1: "#00ffff", 2: "#00cc00", 3: "#ffff00", 4: "#ff0000" };
@@ -258,7 +233,13 @@ function makeOvItem(code) {
   div.className = "ov-item"; div.dataset.code = code;
   div.innerHTML = `<span>${escapeHtml(names[code] || code)}</span>
     <span class="lv-badge" style="${lvBadgeStyle(lv)}">${LV_NAME[lv] || "未踏"}</span>`;
-  div.addEventListener("click", () => { flyTo(code); openPicker(code); });
+  div.addEventListener("click", () => {
+    flyTo(code);
+    setLv(code, ((paints[code] || 0) + 1) % (LV_MAX + 1));
+    updateScore();
+    scheduleSave();
+    renderBadge(code);
+  });
   return div;
 }
 
