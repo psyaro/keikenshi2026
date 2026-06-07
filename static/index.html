@@ -10,7 +10,7 @@
           integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
           integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
-  <link href="style.css?v=20260604d" rel="stylesheet" />
+  <link href="style.css?v=20260608" rel="stylesheet" />
 </head>
 <body>
   <div id="map"></div>
@@ -23,6 +23,43 @@
       <button id="panel-toggle" aria-label="設定">⚙ 設定</button>
     </div>
   </header>
+
+  <!-- フローティングボタン -->
+  <div id="fab-group">
+    <button id="fab-search" title="市区町村を検索">🔍</button>
+    <button id="fab-list" title="都道府県から選ぶ">🗾</button>
+  </div>
+
+  <!-- 検索オーバーレイ -->
+  <div id="search-overlay" class="overlay hidden">
+    <div class="ov-header">
+      <input id="search-input" type="search" placeholder="市区町村名で検索…" autocomplete="off" />
+      <button class="ov-close" id="search-close">×</button>
+    </div>
+    <div id="search-results" class="ov-list"></div>
+  </div>
+
+  <!-- 都道府県リストオーバーレイ -->
+  <div id="pref-overlay" class="overlay hidden">
+    <div class="ov-header">
+      <span class="ov-title">都道府県から選ぶ</span>
+      <button class="ov-close" id="pref-close">×</button>
+    </div>
+    <div id="pref-grid" class="pref-grid"></div>
+    <div id="city-list" class="ov-list"></div>
+  </div>
+
+  <!-- レベルピッカー -->
+  <div id="lv-picker" class="hidden">
+    <div id="lv-picker-name"></div>
+    <div class="lv-btns">
+      <button class="lv-btn" data-lv="0">× 未踏</button>
+      <button class="lv-btn" data-lv="1">▲ 通過</button>
+      <button class="lv-btn" data-lv="2">△ 接地</button>
+      <button class="lv-btn" data-lv="3">● 訪問</button>
+      <button class="lv-btn" data-lv="4">○ 宿泊</button>
+    </div>
+  </div>
 
   <aside id="panel">
     <div class="grab"></div>
@@ -130,12 +167,12 @@
     <div class="field">
       <span id="status" class="status-auto">自動保存</span>
     </div>
-    <div class="hint">区画をクリックで 0→1→2→3→4→5→0 と循環します。変更は自動保存されます。</div>
+    <div class="hint">区画をクリックで段階が循環します。🔍検索や🗾リストからも設定できます。変更は自動保存されます。</div>
 
     <div class="divider"></div>
     <div class="field" id="panel-account"></div>
   </aside>
 
-  <script src="app.js?v=20260604e"></script>
+  <script src="app.js?v=20260608"></script>
 </body>
 </html>

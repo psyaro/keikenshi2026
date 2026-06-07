@@ -174,7 +174,126 @@ async function loadNames(url = GEOJSON_URL) {
   try {
     const gj = await (await fetch(url)).json();
     for (const f of gj.features) names[f.properties.code] = f.properties.name;
+    buildPrefIndex();
   } catch (_) {}
+}
+
+// ---- 都道府県インデックス -----------------------------------------------
+const byPref = {}; // {"01": [{code,name},...], ...}
+function buildPrefIndex() {
+  for (const code in names) {
+    const p = code.slice(0, 2);
+    (byPref[p] = byPref[p] || []).push({ code, name: names[code] });
+  }
+  for (const p in byPref) byPref[p].sort((a, b) => a.code.localeCompare(b.code));
+}
+
+// ---- レベルピッカー -------------------------------------------------------
+let pickerCode = null;
+function openPicker(code) {
+  pickerCode = code;
+  const lv = paints[code] || 0;
+  document.getElementById("lv-picker-name").textContent = names[code] || code;
+  document.querySelectorAll(".lv-btn").forEach(btn => {
+    btn.classList.toggle("active", parseInt(btn.dataset.lv) === lv);
+  });
+  document.getElementById("lv-picker").classList.remove("hidden");
+}
+document.querySelectorAll(".lv-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (pickerCode == null) return;
+    setLv(pickerCode, parseInt(btn.dataset.lv));
+    updateScore();
+    scheduleSave();
+    document.getElementById("lv-picker").classList.add("hidden");
+    // リスト表示中なら該当行のバッジを更新
+    renderBadge(pickerCode);
+  });
+});
+document.getElementById("lv-picker").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden");
+});
+
+function lvBadgeStyle(lv) {
+  const colors = { 0: "#eee", 1: "#00ffff", 2: "#00cc00", 3: "#ffff00", 4: "#ff0000" };
+  const text = { 0: "#999", 1: "#333", 2: "#fff", 3: "#555", 4: "#fff" };
+  return `background:${colors[lv] || "#eee"};color:${text[lv] || "#333"}`;
+}
+function renderBadge(code) {
+  document.querySelectorAll(`.ov-item[data-code="${code}"] .lv-badge`).forEach(el => {
+    const lv = paints[code] || 0;
+    el.textContent = LV_NAME[lv] || "未踏";
+    el.setAttribute("style", lvBadgeStyle(lv));
+  });
+}
+
+function makeOvItem(code) {
+  const lv = paints[code] || 0;
+  const div = document.createElement("div");
+  div.className = "ov-item"; div.dataset.code = code;
+  div.innerHTML = `<span>${escapeHtml(names[code] || code)}</span>
+    <span class="lv-badge" style="${lvBadgeStyle(lv)}">${LV_NAME[lv] || "未踏"}</span>`;
+  div.addEventListener("click", () => openPicker(code));
+  return div;
+}
+
+// ---- 検索 ---------------------------------------------------------------
+const searchOverlay = document.getElementById("search-overlay");
+const searchInput   = document.getElementById("search-input");
+const searchResults = document.getElementById("search-results");
+
+document.getElementById("fab-search").addEventListener("click", () => {
+  searchOverlay.classList.remove("hidden");
+  document.getElementById("pref-overlay").classList.add("hidden");
+  document.getElementById("lv-picker").classList.add("hidden");
+  searchInput.value = "";
+  searchResults.innerHTML = "";
+  searchInput.focus();
+});
+document.getElementById("search-close").addEventListener("click", () => searchOverlay.classList.add("hidden"));
+
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.trim();
+  searchResults.innerHTML = "";
+  if (!q) return;
+  const hits = Object.keys(names).filter(c => names[c].includes(q)).slice(0, 80);
+  if (!hits.length) {
+    searchResults.innerHTML = `<div style="padding:24px;text-align:center;color:#999">見つかりません</div>`;
+    return;
+  }
+  hits.forEach(c => searchResults.appendChild(makeOvItem(c)));
+});
+
+// ---- 都道府県リスト -------------------------------------------------------
+const prefOverlay = document.getElementById("pref-overlay");
+const prefGrid    = document.getElementById("pref-grid");
+const cityList    = document.getElementById("city-list");
+let activePref    = null;
+
+document.getElementById("fab-list").addEventListener("click", () => {
+  prefOverlay.classList.remove("hidden");
+  searchOverlay.classList.add("hidden");
+  document.getElementById("lv-picker").classList.add("hidden");
+  if (!prefGrid.children.length) renderPrefGrid();
+});
+document.getElementById("pref-close").addEventListener("click", () => prefOverlay.classList.add("hidden"));
+
+function renderPrefGrid() {
+  PREFS.forEach((name, i) => {
+    const code = String(i + 1).padStart(2, "0");
+    const btn = document.createElement("button");
+    btn.className = "pref-btn"; btn.textContent = name.replace(/[都道府県]$/, "");
+    btn.dataset.pref = code;
+    btn.addEventListener("click", () => selectPref(code, btn));
+    prefGrid.appendChild(btn);
+  });
+}
+function selectPref(pref, btn) {
+  activePref = pref;
+  prefGrid.querySelectorAll(".pref-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  cityList.innerHTML = "";
+  (byPref[pref] || []).forEach(({ code }) => cityList.appendChild(makeOvItem(code)));
 }
 
 // 境界の精細さ切替(geojson source のみ)。データ差し替え後に塗りを貼り直す。
