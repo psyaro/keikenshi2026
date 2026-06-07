@@ -47,16 +47,22 @@ select {
 input[type="range"] { accent-color: var(--brand); }
 
 /* ===== ランディング ===== */
-.landing { background: var(--bg); min-height: 100%; }
+.landing {
+  background: url('hero-bg.jpg') center/cover no-repeat fixed;
+  min-height: 100%;
+}
 .nav {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 24px; max-width: 1080px; margin: 0 auto;
+  background: rgba(255,255,255,0.88); backdrop-filter: blur(6px);
 }
 .brand { font-weight: 800; font-size: 18px; color: var(--ink); text-decoration: none; }
 .brand .dot { color: var(--brand); }
 .nav .actions { display: flex; gap: 10px; }
 .hero {
   text-align: center; padding: 56px 24px 40px; max-width: 760px; margin: 0 auto;
+  background: rgba(255,255,255,0.82); backdrop-filter: blur(8px);
+  border-radius: 20px; margin-top: 32px; margin-bottom: 16px;
 }
 .hero h1 { font-size: clamp(28px, 6vw, 46px); margin: 0 0 14px; line-height: 1.2; }
 .hero p { font-size: clamp(15px, 2.5vw, 18px); color: var(--muted); margin: 0 0 28px; }

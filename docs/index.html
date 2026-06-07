@@ -3,22 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>経県値マップ 2026（デモ）</title>
-  <meta name="description" content="行ったまちを5段階で塗り分ける経県値マップ。背景地図切替・鉄道/高速の重畳・CSV/HTML/JPG書き出し。" />
+  <title>経験市 2026（デモ）</title>
+  <meta name="description" content="行ったまちを4段階で塗り分ける経験市。背景地図切替・鉄道/高速の重畳・CSV/HTML/JPG書き出し。" />
 
   <!-- 共有カード(OGP / Twitter) -->
-  <!-- ↓ 公開URLに合わせて USERNAME / REPO を書き換える(絶対URL推奨) -->
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="経県値マップ 2026" />
-  <meta property="og:title" content="経県値マップ 2026（デモ）" />
-  <meta property="og:description" content="行ったまちを5段階で塗り分け。背景地図切替・鉄道/高速の重畳・CSV/HTML/JPG書き出し。" />
+  <meta property="og:site_name" content="経験市 2026" />
+  <meta property="og:title" content="経験市 2026（デモ）" />
+  <meta property="og:description" content="行ったまちを4段階で塗り分け。背景地図切替・鉄道/高速の重畳・CSV/HTML/JPG書き出し。" />
   <meta property="og:image" content="https://psyaro.github.io/keikenshi2026/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:url" content="https://psyaro.github.io/keikenshi2026/" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="経県値マップ 2026（デモ）" />
-  <meta name="twitter:description" content="行ったまちを5段階で塗り分け。CSV/HTML/JPGで書き出しできます。" />
+  <meta name="twitter:title" content="経験市 2026（デモ）" />
+  <meta name="twitter:description" content="行ったまちを4段階で塗り分け。CSV/HTML/JPGで書き出しできます。" />
   <meta name="twitter:image" content="https://psyaro.github.io/keikenshi2026/og.png" />
 
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"
@@ -42,16 +41,14 @@
   <div id="map"></div>
 
   <header id="topbar">
-    <a class="brand" href="./">経県値<span class="dot">マップ</span> <span style="font-size:11px;color:#6b7280;font-weight:600">DEMO</span></a>
+    <a class="brand" href="./">経験<span class="dot">市</span> <span style="font-size:11px;color:#6b7280;font-weight:600">DEMO</span></a>
     <div class="right">
       <button id="panel-toggle" aria-label="設定">⚙ 設定</button>
     </div>
   </header>
 
   <div id="notice">
-    <b>デモ版</b>：塗りは<b>この端末のブラウザにのみ</b>保存されます（サーバ保存・ログインはありません）。
-    端末やブラウザを変えると消えます。残すには <b>CSV / HTML / JPG</b> で書き出してください。
-    <button class="x" id="notice-x" aria-label="閉じる">×</button>
+    ⚠️ <b>これはデモ版です。</b>塗りはこの端末のブラウザにのみ保存されます（サーバ保存・ログイン機能なし）。端末やブラウザを変えると消えます。残すには <b>CSV / HTML / JPG</b> で書き出してください。
   </div>
 
   <aside id="panel">

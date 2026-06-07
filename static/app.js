@@ -364,7 +364,7 @@ document.getElementById("dl-html").addEventListener("click", () => {
   const cityRows = list.map((p) =>
     `<tr><td><span class="sw" style="background:${LV_HEX[p.lv]}"></span>${escapeHtml(p.name)}</td><td>${LV_NAME[p.lv]}(${p.lv})</td></tr>`).join("");
   const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
-<title>経県値マップ — 結果</title>
+<title>経験市 — 結果</title>
 <style>
 body{font-family:system-ui,"Hiragino Sans",sans-serif;color:#1f2330;max-width:900px;margin:24px auto;padding:0 16px}
 h1{font-size:22px}.score{font-size:28px;font-weight:800;color:#4f46e5}
@@ -374,7 +374,7 @@ td,th{border-bottom:1px solid #eee;padding:6px 8px;text-align:left}
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;border:1px solid #ccc;vertical-align:middle}
 .cols{display:flex;gap:24px;flex-wrap:wrap}.cols>div{flex:1;min-width:260px}
 </style></head><body>
-<h1>経県値マップ — 結果</h1>
+<h1>経験市 — 結果</h1>
 <div class="score">${score()} 点</div>
 <img src="${snapshotJpeg()}" alt="map">
 <div class="cols">
