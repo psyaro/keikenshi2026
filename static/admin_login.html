@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>管理者ログイン — 経験市</title>
+  <link href="style.css" rel="stylesheet" />
+</head>
+<body class="auth-wrap">
+  <main class="auth-card">
+    <h1>経験市 管理</h1>
+    <p class="sub">管理者パスワードを入力</p>
+    <form id="form">
+      <label for="password">パスワード</label>
+      <input id="password" type="password" required autofocus />
+      <button type="submit" class="btn">ログイン</button>
+      <div id="msg" class="msg"></div>
+    </form>
+  </main>
+  <script>
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: document.getElementById("password").value }),
+      });
+      if (res.ok) {
+        location.href = "/admin";
+      } else {
+        const d = await res.json().catch(() => ({}));
+        document.getElementById("msg").textContent = d.error || "失敗しました";
+      }
+    });
+  </script>
+</body>
+</html>

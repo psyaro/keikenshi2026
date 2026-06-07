@@ -8,13 +8,14 @@
 ジオメトリ(市区町村境界)は静的なのでここでは一切触らない。
 動的なのは「code -> lv」という小さな整数表だけなので SQLite 1ファイルで足りる。
 """
+import functools
 import os
 import pathlib
 import re
 import secrets
 import sqlite3
 
-from flask import (Flask, g, jsonify, request, send_from_directory, session)
+from flask import (Flask, g, jsonify, redirect, request, send_from_directory, session)
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -183,6 +184,90 @@ def save():
                 )
             saved += 1
     return jsonify({"ok": True, "saved": saved, "user": user})
+
+
+# ---- 管理者画面 ---------------------------------------------------------
+def admin_required(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("admin"):
+            return redirect("/admin/login")
+        return f(*args, **kwargs)
+    return wrapper
+
+
+@app.get("/admin/login")
+def admin_login_page():
+    return send_from_directory(STATIC, "admin_login.html")
+
+
+@app.get("/admin")
+@admin_required
+def admin_page():
+    return send_from_directory(STATIC, "admin.html")
+
+
+@app.post("/api/admin/login")
+@limiter.limit("10 per minute")
+def admin_login():
+    data = request.get_json(force=True) or {}
+    password = data.get("password") or ""
+    admin_pw = os.environ.get("ADMIN_PASSWORD", "")
+    if not admin_pw or password != admin_pw:
+        return jsonify({"error": "パスワードが違います"}), 401
+    session["admin"] = True
+    return jsonify({"ok": True})
+
+
+@app.post("/api/admin/logout")
+def admin_logout():
+    session.pop("admin", None)
+    return jsonify({"ok": True})
+
+
+@app.get("/api/admin/stats")
+@admin_required
+def admin_stats():
+    con = db()
+    user_count = con.execute(
+        "select count(*) from users"
+    ).fetchone()[0]
+    paint_count = con.execute(
+        "select count(*) from paint where lv > 0 and user not like 'guest_%'"
+    ).fetchone()[0]
+    guest_paint_count = con.execute(
+        "select count(*) from paint where lv > 0 and user like 'guest_%'"
+    ).fetchone()[0]
+    return jsonify({
+        "users": user_count,
+        "paints": paint_count,
+        "guest_paints": guest_paint_count,
+    })
+
+
+@app.get("/api/admin/users")
+@admin_required
+def admin_users():
+    rows = db().execute("""
+        select u.username,
+               count(p.code)  as cities,
+               coalesce(sum(p.lv), 0) as score
+        from users u
+        left join paint p on p.user = u.username and p.lv > 0
+        group by u.username
+        order by score desc, u.username
+    """).fetchall()
+    return jsonify([{"username": r["username"], "cities": r["cities"], "score": r["score"]} for r in rows])
+
+
+@app.delete("/api/admin/users/<username>")
+@admin_required
+def admin_delete_user(username):
+    con = db()
+    with con:
+        con.execute("delete from paint where user = ?", (username,))
+        con.execute("delete from users where username = ?", (username,))
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":

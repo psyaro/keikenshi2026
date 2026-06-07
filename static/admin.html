@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>管理画面 — 経験市</title>
+  <link href="style.css" rel="stylesheet" />
+  <style>
+    body { background: var(--bg); padding: 24px; }
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 900px; margin: 0 auto 24px;
+    }
+    .page-header h1 { font-size: 20px; margin: 0; }
+    .stats {
+      display: flex; gap: 16px; max-width: 900px; margin: 0 auto 24px; flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 16px 24px; flex: 1; min-width: 140px; text-align: center;
+    }
+    .stat-card .num { font-size: 32px; font-weight: 800; color: var(--brand); }
+    .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    table {
+      width: 100%; max-width: 900px; margin: 0 auto;
+      border-collapse: collapse; background: var(--card);
+      border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+    }
+    th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { background: var(--bg); font-weight: 600; color: var(--muted); font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fafb; }
+    .del-btn {
+      background: none; border: 1px solid #fca5a5; color: #dc2626;
+      border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+    }
+    .del-btn:hover { background: #fef2f2; }
+    #empty { text-align: center; color: var(--muted); padding: 32px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>経験市 管理画面</h1>
+    <button id="logout-btn" class="btn ghost sm">ログアウト</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="num" id="s-users">—</div><div class="label">ユーザー数</div></div>
+    <div class="stat-card"><div class="num" id="s-paints">—</div><div class="label">総塗り（ログイン）</div></div>
+    <div class="stat-card"><div class="num" id="s-guests">—</div><div class="label">総塗り（ゲスト）</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ユーザー名</th>
+        <th>市区町村数</th>
+        <th>スコア</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <p id="empty">ユーザーがいません</p>
+
+  <script>
+    async function load() {
+      const [stats, users] = await Promise.all([
+        fetch("/api/admin/stats").then(r => r.json()),
+        fetch("/api/admin/users").then(r => r.json()),
+      ]);
+      document.getElementById("s-users").textContent = stats.users;
+      document.getElementById("s-paints").textContent = stats.paints;
+      document.getElementById("s-guests").textContent = stats.guest_paints;
+
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+      if (!users.length) {
+        document.getElementById("empty").style.display = "block";
+        return;
+      }
+      for (const u of users) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escHtml(u.username)}</td>
+          <td>${u.cities}</td>
+          <td>${u.score}</td>
+          <td><button class="del-btn" data-user="${escHtml(u.username)}">削除</button></td>`;
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll(".del-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm(`「${btn.dataset.user}」を削除しますか？`)) return;
+          const res = await fetch(`/api/admin/users/${encodeURIComponent(btn.dataset.user)}`, { method: "DELETE" });
+          if (res.ok) load();
+        });
+      });
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await fetch("/api/admin/logout", { method: "POST" });
+      location.href = "/admin/login";
+    });
+
+    load();
+  </script>
+</body>
+</html>
