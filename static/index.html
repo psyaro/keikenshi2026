@@ -10,7 +10,7 @@
           integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
           integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
-  <link href="style.css?v=20260608" rel="stylesheet" />
+  <link href="style.css?v=20260609" rel="stylesheet" />
 </head>
 <body>
   <div id="map"></div>
@@ -20,34 +20,9 @@
     <div class="right">
       <span id="whoami"></span>
       <span id="account"></span>
-      <button id="panel-toggle" aria-label="設定">⚙ 設定</button>
+      <button id="panel-toggle" aria-label="メニュー">☰</button>
     </div>
   </header>
-
-  <!-- フローティングボタン -->
-  <div id="fab-group">
-    <button id="fab-search" title="市区町村を検索">🔍</button>
-    <button id="fab-list" title="都道府県から選ぶ">🗾</button>
-  </div>
-
-  <!-- 検索オーバーレイ -->
-  <div id="search-overlay" class="overlay hidden">
-    <div class="ov-header">
-      <input id="search-input" type="search" placeholder="市区町村名で検索…" autocomplete="off" />
-      <button class="ov-close" id="search-close">×</button>
-    </div>
-    <div id="search-results" class="ov-list"></div>
-  </div>
-
-  <!-- 都道府県リストオーバーレイ -->
-  <div id="pref-overlay" class="overlay hidden">
-    <div class="ov-header">
-      <span class="ov-title">都道府県から選ぶ</span>
-      <button class="ov-close" id="pref-close">×</button>
-    </div>
-    <div id="pref-grid" class="pref-grid"></div>
-    <div id="city-list" class="ov-list"></div>
-  </div>
 
   <!-- レベルピッカー -->
   <div id="lv-picker" class="hidden">
@@ -64,115 +39,131 @@
   <aside id="panel">
     <div class="grab"></div>
 
-    <div class="field">
-      <h2>スコア</h2>
-      <div class="score"><span id="score">0</span> 点</div>
+    <div class="panel-tabs">
+      <button class="ptab active" data-tab="search">🔍 検索</button>
+      <button class="ptab" data-tab="settings">⚙ 設定</button>
     </div>
 
-    <div class="divider"></div>
-
-    <div class="field">
-      <label for="bg">背景地図</label>
-      <select id="bg">
-        <optgroup label="地理院">
-          <option value="pale">淡色</option>
-          <option value="std">標準</option>
-          <option value="photo">写真</option>
-          <option value="blank">白地図(z5-8)</option>
-        </optgroup>
-        <optgroup label="その他">
-          <option value="osm">OpenStreetMap</option>
-          <option value="carto_light">CARTO Light</option>
-          <option value="carto_dark">CARTO Dark</option>
-          <option value="esri_photo">Esri 衛星写真</option>
-          <option value="otopo">OpenTopoMap</option>
-        </optgroup>
-        <option value="none">なし(白)</option>
-      </select>
+    <!-- 検索/都道府県タブ -->
+    <div id="tab-search" class="tab-pane">
+      <input id="search-input" type="search" placeholder="市区町村名で検索…" autocomplete="off" />
+      <div id="search-results" class="ov-list" style="display:none"></div>
+      <div id="pref-grid" class="pref-grid"></div>
+      <div id="city-list" class="ov-list" style="display:none"></div>
     </div>
 
-    <div class="field">
-      <label for="boundary">境界の精細さ</label>
-      <select id="boundary">
-        <option value="std">標準（軽い）</option>
-        <option value="detail">高精細（重い）</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>背景の不透明度</label>
-      <div class="opacity-row">
-        <input id="bgopacity" type="range" min="0" max="100" value="100" />
-        <span id="bgopval">100%</span>
+    <!-- 設定タブ -->
+    <div id="tab-settings" class="tab-pane hidden">
+      <div class="field">
+        <h2>スコア</h2>
+        <div class="score"><span id="score">0</span> 点</div>
       </div>
-    </div>
 
-    <div class="field">
-      <label>塗りの不透明度</label>
-      <div class="opacity-row">
-        <input id="fillopacity" type="range" min="0" max="100" value="65" />
-        <span id="fillopval">65%</span>
+      <div class="divider"></div>
+
+      <div class="field">
+        <label for="bg">背景地図</label>
+        <select id="bg">
+          <optgroup label="地理院">
+            <option value="pale">淡色</option>
+            <option value="std">標準</option>
+            <option value="photo">写真</option>
+            <option value="blank">白地図(z5-8)</option>
+          </optgroup>
+          <optgroup label="その他">
+            <option value="osm">OpenStreetMap</option>
+            <option value="carto_light">CARTO Light</option>
+            <option value="carto_dark">CARTO Dark</option>
+            <option value="esri_photo">Esri 衛星写真</option>
+            <option value="otopo">OpenTopoMap</option>
+          </optgroup>
+          <option value="none">なし(白)</option>
+        </select>
       </div>
-    </div>
 
-    <div class="field">
-      <label>境界線の不透明度</label>
-      <div class="opacity-row">
-        <input id="lineopacity" type="range" min="0" max="100" value="100" />
-        <span id="lineopval">100%</span>
+      <div class="field">
+        <label for="boundary">境界の精細さ</label>
+        <select id="boundary">
+          <option value="std">標準（軽い）</option>
+          <option value="detail">高精細（重い）</option>
+        </select>
       </div>
-    </div>
 
-    <div class="field">
-      <label>重ねる</label>
-      <div class="toggles">
-        <label><input type="checkbox" id="ov-rail" /> 鉄道（路線名）</label>
-        <label><input type="checkbox" id="ov-hw" /> 高速道路（道路名）</label>
-        <label><input type="checkbox" id="ov-label" /> 自治体名</label>
+      <div class="field">
+        <label>背景の不透明度</label>
+        <div class="opacity-row">
+          <input id="bgopacity" type="range" min="0" max="100" value="100" />
+          <span id="bgopval">100%</span>
+        </div>
       </div>
-    </div>
 
-    <div class="divider"></div>
-
-    <div class="field">
-      <h2>凡例</h2>
-      <div class="legend">
-        <span data-lv="4">○ 宿泊 (4)</span>
-        <span data-lv="3">● 訪問 (3)</span>
-        <span data-lv="2">△ 接地 (2)</span>
-        <span data-lv="1">▲ 通過 (1)</span>
-        <span data-lv="0">× 未踏 (0)</span>
+      <div class="field">
+        <label>塗りの不透明度</label>
+        <div class="opacity-row">
+          <input id="fillopacity" type="range" min="0" max="100" value="65" />
+          <span id="fillopval">65%</span>
+        </div>
       </div>
-    </div>
 
-    <div class="divider"></div>
-
-    <div class="field">
-      <label>ダウンロード</label>
-      <div class="dl-row">
-        <button id="dl-csv" class="btn ghost sm">CSV</button>
-        <button id="dl-html" class="btn ghost sm">HTML</button>
-        <button id="dl-jpg" class="btn ghost sm">JPG</button>
+      <div class="field">
+        <label>境界線の不透明度</label>
+        <div class="opacity-row">
+          <input id="lineopacity" type="range" min="0" max="100" value="100" />
+          <span id="lineopval">100%</span>
+        </div>
       </div>
-    </div>
 
-    <div class="field">
-      <label>インポート</label>
-      <div class="dl-row">
-        <button id="imp-csv" class="btn ghost sm">CSV を読み込む</button>
+      <div class="field">
+        <label>重ねる</label>
+        <div class="toggles">
+          <label><input type="checkbox" id="ov-rail" /> 鉄道（路線名）</label>
+          <label><input type="checkbox" id="ov-hw" /> 高速道路（道路名）</label>
+          <label><input type="checkbox" id="ov-label" /> 自治体名</label>
+        </div>
       </div>
-      <input id="imp-file" type="file" accept=".csv,text/csv" hidden />
-    </div>
 
-    <div class="field">
-      <span id="status" class="status-auto">自動保存</span>
-    </div>
-    <div class="hint">区画をクリックで段階が循環します。🔍検索や🗾リストからも設定できます。変更は自動保存されます。</div>
+      <div class="divider"></div>
 
-    <div class="divider"></div>
-    <div class="field" id="panel-account"></div>
+      <div class="field">
+        <h2>凡例</h2>
+        <div class="legend">
+          <span data-lv="4">○ 宿泊 (4)</span>
+          <span data-lv="3">● 訪問 (3)</span>
+          <span data-lv="2">△ 接地 (2)</span>
+          <span data-lv="1">▲ 通過 (1)</span>
+          <span data-lv="0">× 未踏 (0)</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label>ダウンロード</label>
+        <div class="dl-row">
+          <button id="dl-csv" class="btn ghost sm">CSV</button>
+          <button id="dl-html" class="btn ghost sm">HTML</button>
+          <button id="dl-jpg" class="btn ghost sm">JPG</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>インポート</label>
+        <div class="dl-row">
+          <button id="imp-csv" class="btn ghost sm">CSV を読み込む</button>
+        </div>
+        <input id="imp-file" type="file" accept=".csv,text/csv" hidden />
+      </div>
+
+      <div class="field">
+        <span id="status" class="status-auto">自動保存</span>
+      </div>
+      <div class="hint">区画をクリックで段階が循環します。検索や都道府県リストからも設定できます。変更は自動保存されます。</div>
+
+      <div class="divider"></div>
+      <div class="field" id="panel-account"></div>
+    </div>
   </aside>
 
-  <script src="app.js?v=20260608"></script>
+  <script src="app.js?v=20260609"></script>
 </body>
 </html>

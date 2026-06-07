@@ -70,6 +70,7 @@ map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-rig
 
 const paints = {};       // code -> lv
 const names = {};        // code -> 市区町村名
+const bounds = {};       // code -> [[minLng,minLat],[maxLng,maxLat]]
 const SOURCE = "cities";
 const SRC_LAYER = USE_PMTILES ? PMTILES_LAYER : undefined;
 const srcLayer = SRC_LAYER ? { "source-layer": SRC_LAYER } : {};
@@ -170,10 +171,28 @@ async function loadUserData() {
   for (const code in data) setLv(code, data[code]);
   updateScore();
 }
+function geomBBox(coords) {
+  if (typeof coords[0] === "number")
+    return { minLng: coords[0], maxLng: coords[0], minLat: coords[1], maxLat: coords[1] };
+  let r = { minLng: Infinity, maxLng: -Infinity, minLat: Infinity, maxLat: -Infinity };
+  for (const c of coords) {
+    const b = geomBBox(c);
+    if (b.minLng < r.minLng) r.minLng = b.minLng;
+    if (b.maxLng > r.maxLng) r.maxLng = b.maxLng;
+    if (b.minLat < r.minLat) r.minLat = b.minLat;
+    if (b.maxLat > r.maxLat) r.maxLat = b.maxLat;
+  }
+  return r;
+}
 async function loadNames(url = GEOJSON_URL) {
   try {
     const gj = await (await fetch(url)).json();
-    for (const f of gj.features) names[f.properties.code] = f.properties.name;
+    for (const f of gj.features) {
+      const code = f.properties.code;
+      names[code] = f.properties.name;
+      const b = geomBBox(f.geometry.coordinates);
+      bounds[code] = [[b.minLng, b.minLat], [b.maxLng, b.maxLat]];
+    }
     buildPrefIndex();
   } catch (_) {}
 }
@@ -186,6 +205,12 @@ function buildPrefIndex() {
     (byPref[p] = byPref[p] || []).push({ code, name: names[code] });
   }
   for (const p in byPref) byPref[p].sort((a, b) => a.code.localeCompare(b.code));
+  if (!document.getElementById("pref-grid").children.length) renderPrefGrid();
+}
+
+function flyTo(code) {
+  const b = bounds[code];
+  if (b) map.fitBounds(b, { padding: 60, maxZoom: 13, duration: 600 });
 }
 
 // ---- レベルピッカー -------------------------------------------------------
@@ -233,50 +258,48 @@ function makeOvItem(code) {
   div.className = "ov-item"; div.dataset.code = code;
   div.innerHTML = `<span>${escapeHtml(names[code] || code)}</span>
     <span class="lv-badge" style="${lvBadgeStyle(lv)}">${LV_NAME[lv] || "未踏"}</span>`;
-  div.addEventListener("click", () => openPicker(code));
+  div.addEventListener("click", () => { flyTo(code); openPicker(code); });
   return div;
 }
 
-// ---- 検索 ---------------------------------------------------------------
-const searchOverlay = document.getElementById("search-overlay");
+// ---- 検索 / 都道府県リスト -----------------------------------------------
 const searchInput   = document.getElementById("search-input");
 const searchResults = document.getElementById("search-results");
+const prefGrid      = document.getElementById("pref-grid");
+const cityList      = document.getElementById("city-list");
+let activePref      = null;
 
-document.getElementById("fab-search").addEventListener("click", () => {
-  searchOverlay.classList.remove("hidden");
-  document.getElementById("pref-overlay").classList.add("hidden");
-  document.getElementById("lv-picker").classList.add("hidden");
-  searchInput.value = "";
-  searchResults.innerHTML = "";
-  searchInput.focus();
+// パネルタブ切替
+document.querySelectorAll(".ptab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".ptab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const target = tab.dataset.tab;
+    document.getElementById("tab-search").classList.toggle("hidden", target !== "search");
+    document.getElementById("tab-settings").classList.toggle("hidden", target !== "settings");
+  });
 });
-document.getElementById("search-close").addEventListener("click", () => searchOverlay.classList.add("hidden"));
 
 searchInput.addEventListener("input", () => {
   const q = searchInput.value.trim();
-  searchResults.innerHTML = "";
-  if (!q) return;
-  const hits = Object.keys(names).filter(c => names[c].includes(q)).slice(0, 80);
-  if (!hits.length) {
-    searchResults.innerHTML = `<div style="padding:24px;text-align:center;color:#999">見つかりません</div>`;
-    return;
+  if (q) {
+    prefGrid.style.display = "none";
+    cityList.style.display = "none";
+    searchResults.style.display = "";
+    searchResults.innerHTML = "";
+    const hits = Object.keys(names).filter(c => names[c].includes(q)).slice(0, 80);
+    if (!hits.length) {
+      searchResults.innerHTML = `<div style="padding:24px;text-align:center;color:#999">見つかりません</div>`;
+      return;
+    }
+    hits.forEach(c => searchResults.appendChild(makeOvItem(c)));
+  } else {
+    prefGrid.style.display = "";
+    cityList.style.display = activePref ? "" : "none";
+    searchResults.style.display = "none";
+    searchResults.innerHTML = "";
   }
-  hits.forEach(c => searchResults.appendChild(makeOvItem(c)));
 });
-
-// ---- 都道府県リスト -------------------------------------------------------
-const prefOverlay = document.getElementById("pref-overlay");
-const prefGrid    = document.getElementById("pref-grid");
-const cityList    = document.getElementById("city-list");
-let activePref    = null;
-
-document.getElementById("fab-list").addEventListener("click", () => {
-  prefOverlay.classList.remove("hidden");
-  searchOverlay.classList.add("hidden");
-  document.getElementById("lv-picker").classList.add("hidden");
-  if (!prefGrid.children.length) renderPrefGrid();
-});
-document.getElementById("pref-close").addEventListener("click", () => prefOverlay.classList.add("hidden"));
 
 function renderPrefGrid() {
   PREFS.forEach((name, i) => {
@@ -293,6 +316,10 @@ function selectPref(pref, btn) {
   prefGrid.querySelectorAll(".pref-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   cityList.innerHTML = "";
+  cityList.style.display = "";
+  searchInput.value = "";
+  searchResults.style.display = "none";
+  searchResults.innerHTML = "";
   (byPref[pref] || []).forEach(({ code }) => cityList.appendChild(makeOvItem(code)));
 }
 
