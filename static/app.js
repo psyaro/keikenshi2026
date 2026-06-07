@@ -233,13 +233,7 @@ function makeOvItem(code) {
   div.className = "ov-item"; div.dataset.code = code;
   div.innerHTML = `<span>${escapeHtml(names[code] || code)}</span>
     <span class="lv-badge" style="${lvBadgeStyle(lv)}">${LV_NAME[lv] || "未踏"}</span>`;
-  div.addEventListener("click", () => {
-    flyTo(code);
-    setLv(code, ((paints[code] || 0) + 1) % (LV_MAX + 1));
-    updateScore();
-    scheduleSave();
-    renderBadge(code);
-  });
+  div.addEventListener("click", () => flyTo(code));
   return div;
 }
 
